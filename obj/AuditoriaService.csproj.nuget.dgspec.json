@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\hp\\Desktop\\AuditoriaService\\AuditoriaService.csproj": {}
+    "E:\\Proyectos\\proyecto_unidad_ii-intranet-asistencias\\AuditoriaService.csproj": {}
   },
   "projects": {
-    "C:\\Users\\hp\\Desktop\\AuditoriaService\\AuditoriaService.csproj": {
+    "E:\\Proyectos\\proyecto_unidad_ii-intranet-asistencias\\AuditoriaService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\hp\\Desktop\\AuditoriaService\\AuditoriaService.csproj",
+        "projectUniqueName": "E:\\Proyectos\\proyecto_unidad_ii-intranet-asistencias\\AuditoriaService.csproj",
         "projectName": "AuditoriaService",
-        "projectPath": "C:\\Users\\hp\\Desktop\\AuditoriaService\\AuditoriaService.csproj",
-        "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\hp\\Desktop\\AuditoriaService\\obj\\",
+        "projectPath": "E:\\Proyectos\\proyecto_unidad_ii-intranet-asistencias\\AuditoriaService.csproj",
+        "packagesPath": "C:\\Users\\larod\\.nuget\\packages\\",
+        "outputPath": "E:\\Proyectos\\proyecto_unidad_ii-intranet-asistencias\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\hp\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\larod\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -81,7 +81,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }

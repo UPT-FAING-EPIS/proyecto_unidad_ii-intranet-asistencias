@@ -1,86 +1,49 @@
 using System;
 using System.Text;
-using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using Nest;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using RabbitMQ.Client.Events;
+using RabbitMQToElasticsearch.Models;
+using RabbitMQToElasticsearch.RabbitMq;
+using RabbitMQToElasticsearch.ElasticSearch;
 
-namespace RabbitMQToElasticsearch.Services
-{
-    
-    public class LogService
+namespace RabbitMQToElasticsearch.Services{
+    public class LogService : ILogService
     {
-        
-        private readonly ElasticClient _elasticClient;
-        private readonly ConnectionFactory _factory = new ConnectionFactory();
-        private IConnection _connection = default!;
-        private IModel _channel = default!;
+        private readonly IElasticSearchService _elasticSearchService;
+        private readonly IRabbitMqService _rabbitMqService;
         private readonly ILogger<LogService> _logger;
 
-        public LogService(IConfiguration configuration, ILogger<LogService> logger)
+        
+
+        public LogService(IConfiguration configuration, ILogger<LogService> logger, IElasticSearchService elasticSearchService, IRabbitMqService rabbitMqService)
         {
             _logger = logger;
-            
-            var elasticUrl = configuration.GetSection("Elasticsearch:Url").Value;
-            if (string.IsNullOrEmpty(elasticUrl))
-            {
-                throw new ArgumentException("Elasticsearch URL is not configured.");
-            }
-            var settings = new ConnectionSettings(new Uri(elasticUrl)).DefaultIndex("logs");
+            _elasticSearchService = elasticSearchService;
+            _rabbitMqService = rabbitMqService;
+        }
 
-            _elasticClient = new ElasticClient(settings);
-            var response = _elasticClient.Ping();
-            if (!response.IsValid)
-            {
-                _logger.LogError("Failed to connect to Elasticsearch: {message}", response.DebugInformation);
-                throw new Exception("Failed to connect to Elasticsearch");
-            }
+        public void ConsumeQueue()
+        {
+            var consumer = _rabbitMqService.ConsumeQueue();
+            consumer.Received += OnMessageReceived;
+            consumer.ConsumerCancelled += OnConsumerCancelled;
+        }
 
-            try
-            {
-                _factory = new ConnectionFactory() { HostName = configuration.GetSection("RabbitMQ:HostName").Value };
-                _connection = _factory.CreateConnection();
-                _channel = _connection.CreateModel();
+        private void OnMessageReceived(object model, BasicDeliverEventArgs ea)
+        {
+            var body = ea.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+            _logger.LogInformation("Received log message: {message}", message);
 
-                _channel.QueueDeclare(queue: "logs",durable: false,exclusive: false,autoDelete: false,arguments: null);
+            var logEntry = JsonSerializer.Deserialize<LogEntry>(message);
+            _elasticSearchService.IndexDocument(logEntry);
+        }
 
-                var consumer = new EventingBasicConsumer(_channel);
-                consumer.Received += (model, ea) =>
-                {
-                    var body = ea.Body.ToArray();
-                    var message = Encoding.UTF8.GetString(body);
-                    _logger.LogInformation("Received log message: {message}", message);
-                    var logEntry = JsonSerializer.Deserialize<LogEntry>(message);
-                    var indexResponse = _elasticClient.IndexDocument(logEntry);
-
-                    if (!indexResponse.IsValid)
-                    {
-                        _logger.LogError("Failed to index document: {message}", indexResponse.OriginalException.Message);
-                    }
-                };
-                consumer.ConsumerCancelled += (model, ea) =>
-                {
-                    Console.WriteLine("Consumption has been cancelled by the server. Check your RabbitMQ configuration.");
-                };
-                _channel.BasicConsume(queue: "logs",
-                                    autoAck: true,
-                                    consumer: consumer);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error connecting to RabbitMQ");
-                Console.WriteLine(ex.ToString());
-                throw ex;
-            }
+        private void OnConsumerCancelled(object model, ConsumerEventArgs ea)
+        {
+            Console.WriteLine("Consumption has been cancelled by the server. Check your RabbitMQ configuration.");
         }
     }
-    public class LogEntry
-    {
-        public DateTime Timestamp { get; set; }
-        public string? Level { get; set; }
-        public string? Message { get; set; }
-    }
-
 }
