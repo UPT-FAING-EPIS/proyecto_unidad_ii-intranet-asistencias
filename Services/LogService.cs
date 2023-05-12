@@ -21,7 +21,6 @@ namespace RabbitMQToElasticsearch.Services
 
         public LogService(IConfiguration configuration, ILogger<LogService> logger)
         {
-            Console.WriteLine( "Si me ejecuto");
             _logger = logger;
             
             var elasticUrl = configuration.GetSection("Elasticsearch:Url").Value;
@@ -32,7 +31,13 @@ namespace RabbitMQToElasticsearch.Services
             var settings = new ConnectionSettings(new Uri(elasticUrl)).DefaultIndex("logs");
 
             _elasticClient = new ElasticClient(settings);
-            
+            var response = _elasticClient.Ping();
+            if (!response.IsValid)
+            {
+                _logger.LogError("Failed to connect to Elasticsearch: {message}", response.DebugInformation);
+                throw new Exception("Failed to connect to Elasticsearch");
+            }
+
             try
             {
                 _factory = new ConnectionFactory() { HostName = configuration.GetSection("RabbitMQ:HostName").Value };
@@ -67,6 +72,7 @@ namespace RabbitMQToElasticsearch.Services
             {
                 _logger.LogError(ex, "Error connecting to RabbitMQ");
                 Console.WriteLine(ex.ToString());
+                throw ex;
             }
         }
     }
